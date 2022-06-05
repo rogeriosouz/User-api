@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import Users from '../models/User';
 import validator from 'email-validator';
-import jwt from 'jsonwebtoken';
 
 type User = {
   name: string,
