@@ -50,7 +50,11 @@ class UserController {
         expiresIn: process.env.TOKEN_DAYS 
       })
 
-    return res.json({ token });
+    return res.json({ token, user: { 
+      name: emailValid?.name,
+      email: emailValid?.email
+    }});
+
   }
 
   async post(req: Request, res: Response): Promise<Response<User, Record<string, User>> | undefined> {
@@ -91,15 +95,72 @@ class UserController {
       } 
 
       await Users.create(user);
-      return res.json({ user });
+
+      const usDb = await Users.findOne({ email });
+      const token = jwt.sign({ userId: usDb?._id }, process.env.SECRET as string,
+        { 
+          expiresIn: process.env.TOKEN_DAYS 
+        })
+
+      return res.json({ token, user: { 
+        name: usDb?.name,
+        email: usDb?.email
+      }});
 
     } catch (error) {
       console.log(errors);
     }   
   }
 
-  update(req: Request, res: Response): void {
-    res.json({ update: 'true' })
+
+  async update(req: any, res: Response) {
+    const userId = req.userId;
+    const user = await Users.findOne({ userId });
+
+    const errors: string[] = [];
+
+    const { name, email, password }: User = req.body
+    
+    if(!name || !email || !password) {
+      return res.status(401).json({ Errors: 'Campos vazios!' })
+    } else {
+      if(name.length < 2 || name.length > 50) {
+        errors.push('Name Invalido de 2 a 50 caracteres!');
+      }
+    }
+
+    if(password.length < 5 || password.length > 50) {
+      errors.push('Password Invalido de 5 a 50 caracteres!');
+    }
+
+    if(!validator.validate(email)) {
+      errors.push('Email invalido!');
+    }
+
+    const EmailDb = await Users.findOne({ email });
+
+    if (EmailDb) {
+      errors.push('Email ja esiste!');
+    }
+    
+    if(errors.length > 0) {
+      return res.status(401).json({ Errors: errors })
+    }
+
+    const users = {
+      name,
+      email, 
+      password: bcrypt.hashSync(password, 10)
+    }
+    await Users.updateOne({ user }, users)
+    res.json(users)
+  }
+
+  async recorverInfomationUser(req: any, res: Response) {
+    const userId = req.userId;
+    const user = await Users.findOne({ userId })
+
+    return res.json(user)
   }
 
 }

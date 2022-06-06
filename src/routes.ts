@@ -12,6 +12,7 @@ routers.get('/', homeController.get);
 routers.get('/user/login', userController.get);
 routers.post('/user/register', userController.post);
 routers.put('/user/update', ferifica, userController.update);
+routers.get('/user/recorverInfomationUser', ferifica, userController.recorverInfomationUser);
 
 
 export default routers;
